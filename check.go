@@ -12,7 +12,7 @@ import (
 )
 
 type detailMod struct {
-	Mod module.Version
+	module.Version
 	// Computed fields
 	User    string
 	Project string
@@ -21,15 +21,15 @@ type detailMod struct {
 }
 
 func (m *detailMod) Parse(mod module.Version) {
-	m.Mod = mod
+	m.Version = mod
 
-	parts := strings.SplitN(mod.Path, "/", 4)
+	parts := strings.SplitN(m.Version.Path, "/", 4)
 	if len(parts) < 3 {
 		return
 	}
 	host, user, project := parts[0], parts[1], parts[2]
 	if user == "" || project == "" {
-		Log.Printf("unable to parse %s", mod.Path)
+		Log.Printf("unable to parse %s", m.Version.Path)
 	}
 
 	u := &url.URL{
@@ -56,7 +56,7 @@ type license struct {
 // license.
 func (m *detailMod) License(ctx context.Context, gh *github.Client) (*license, error) {
 	if m.User == "" || m.Project == "" {
-		return nil, fmt.Errorf("cannot fetch license for %s", m.Mod.Path)
+		return nil, fmt.Errorf("cannot fetch license for %s", m.Version.Path)
 	}
 
 	resp, _, err := gh.Repositories.License(ctx, m.User, m.Project)

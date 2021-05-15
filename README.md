@@ -1,18 +1,16 @@
 # go-license-report
 
-Generates a CSV report of dependencies and their licenses.
+Generates a CSV report of dependencies and their licenses by reading
+the `go.mod` file. Dependencies missing a license are included in the output.
 
 Example output:
 ```csv
 Dependency,Version,URL,License,LicenseURL
-github.com/cenkalti/backoff,v2.2.1+incompatible,https://github.com/cenkalti/backoff,MIT License,https://api.github.com/licenses/mit
-github.com/gin-gonic/gin,v1.6.3,https://github.com/gin-gonic/gin,MIT License,https://api.github.com/licenses/mit
-github.com/google/uuid,v1.1.1,https://github.com/google/uuid,"BSD 3-Clause "New"" or ""Revised"" License",https://api.github.com/licenses/bsd-3-clause
-github.com/kelseyhightower/envconfig,v1.4.0,https://github.com/kelseyhightower/envconfig,MIT License,https://api.github.com/licenses/mit
-github.com/matryer/moq,v0.0.0-20191106032847-0e0395200ade,https://github.com/matryer/moq,MIT License,https://api.github.com/licenses/mit
-github.com/pkg/errors,v0.9.1,https://github.com/pkg/errors,"BSD 2-Clause "Simplified"" License",https://api.github.com/licenses/bsd-2-clause
-github.com/sirupsen/logrus,v1.4.2,https://github.com/sirupsen/logrus,MIT License,https://api.github.com/licenses/mit
-github.com/stretchr/testify,v1.7.0,https://github.com/stretchr/testify,MIT License,https://api.github.com/licenses/mit
+github.com/google/go-github,v17.0.0+incompatible,https://github.com/google/go-github,"BSD 3-Clause "New"" or ""Revised"" License",https://api.github.com/licenses/bsd-3-clause
+github.com/google/go-querystring,v1.0.0,https://github.com/google/go-querystring,"BSD 3-Clause "New"" or ""Revised"" License",https://api.github.com/licenses/bsd-3-clause
+github.com/stretchr/testify,v1.3.0,https://github.com/stretchr/testify,MIT License,https://api.github.com/licenses/mit
+golang.org/x/mod,v0.4.2,https://golang.org/x/mod,,
+golang.org/x/oauth2,v0.0.0-20190402181905-9f3314589c9a,https://golang.org/x/oauth2,,
 ```
 
 ## Quickstart 
@@ -28,10 +26,17 @@ github.com/stretchr/testify,v1.7.0,https://github.com/stretchr/testify,MIT Licen
     ```
 
 If you want to ignore certain dependencies, like internal org dependencies, 
-use the `-i` flag:
+use the `-ignore` flag:
 
 ```
-go-license-report -i github.com/myUser
+go-license-report -ignore github.com/myUser
+```
+
+If you want to fail when a dependency does not have a license, use the 
+`-strict` flag.
+
+```
+go-license-report -strict
 ```
 
 Use the `-help` flag for detailed usage information.

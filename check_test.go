@@ -52,8 +52,8 @@ func TestDetailMod(t *testing.T) {
 			var dm detailMod
 			dm.Parse(tt.mod)
 
-			assert.Equal(t, tt.mod.Path, dm.Mod.Path, "unexpected module path")
-			assert.Equal(t, tt.mod.Version, dm.Mod.Version, "unexpected module version")
+			assert.Equal(t, tt.mod.Path, dm.Version.Path, "unexpected module path")
+			assert.Equal(t, tt.mod.Version, dm.Version.Version, "unexpected module version")
 			assert.Equal(t, tt.expUser, dm.User, "unexpected User")
 			assert.Equal(t, tt.expProject, dm.Project, "unexpected Project")
 			assert.Equal(t, tt.expURL, dm.URL, "unexpected URL")

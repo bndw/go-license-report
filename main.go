@@ -20,7 +20,8 @@ import (
 
 var (
 	// Args
-	ignorePrefix = flag.String("i", "", "module prefixes to ignore")
+	ignorePrefix = flag.String("ignore", "", "module prefixes to ignore")
+	strict       = flag.Bool("strict", false, "fail if a dependency does not have a license")
 )
 
 var Log = log.New(os.Stderr, "", 0)
@@ -28,33 +29,38 @@ var Log = log.New(os.Stderr, "", 0)
 func main() {
 	flag.Parse()
 
-	info, err := GetGoModInfo("./")
+	modFile, err := readModFile("./")
 	if err != nil {
 		Log.Fatal(err)
-	}
-
-	table := [][]string{
-		{"Dependency", "Version", "URL", "License", "LicenseURL"},
 	}
 
 	ctx := context.Background()
 	gh := ghClient(ctx)
 
-	for _, require := range info.Require {
+	table := [][]string{
+		{"Dependency", "Version", "URL", "License", "LicenseURL"},
+	}
+
+	for _, require := range modFile.Require {
 		var dm detailMod
 		dm.Parse(require.Mod)
 
-		if !dm.Ignore {
-			lic, err := dm.License(ctx, gh)
-			if err != nil {
-				Log.Println(err)
-				continue
-			}
-
-			table = append(table,
-				[]string{dm.Mod.Path, dm.Mod.Version, dm.URL, lic.Name, lic.URL},
-			)
+		if dm.Ignore {
+			continue
 		}
+
+		lic, err := dm.License(ctx, gh)
+		if err != nil {
+			Log.Println(err)
+			continue
+		}
+
+		if lic.Name == "" && *strict {
+			Log.Fatalf("missing license (strict mode): %s", dm.Version.Path)
+		}
+
+		row := []string{dm.Version.Path, dm.Version.Version, dm.URL, lic.Name, lic.URL}
+		table = append(table, row)
 	}
 
 	w := csv.NewWriter(os.Stdout)
@@ -78,7 +84,7 @@ func ghClient(ctx context.Context) *github.Client {
 	return github.NewClient(tc)
 }
 
-func GetGoModInfo(repoDir string) (*modfile.File, error) {
+func readModFile(repoDir string) (*modfile.File, error) {
 	goModPath := filepath.Join(repoDir, "go.mod")
 
 	goModData, err := ioutil.ReadFile(goModPath)
