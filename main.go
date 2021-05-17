@@ -28,8 +28,14 @@ var Log = log.New(os.Stderr, "", 0)
 
 func main() {
 	flag.Parse()
+	args := flag.Args()
 
-	modFile, err := readModFile("./")
+	modDir := "./"
+	if len(args) == 1 {
+		modDir = args[0]
+	}
+
+	modFile, err := readModFile(modDir)
 	if err != nil {
 		Log.Fatal(err)
 	}
