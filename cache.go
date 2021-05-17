@@ -16,7 +16,6 @@ func cacheGet(url string) (*license, bool) {
 	fp := path.Join(cacheDir, key+".json")
 	b, err := ioutil.ReadFile(fp)
 	if err != nil {
-		Log.Printf("failed to read cache file: %w", err)
 		return nil, false
 	}
 

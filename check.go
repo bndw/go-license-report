@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 	"path"
 	"strings"
@@ -17,6 +16,7 @@ type detailMod struct {
 	User    string
 	Project string
 	URL     string
+	Host    string
 	Ignore  bool
 }
 
@@ -38,6 +38,7 @@ func (m *detailMod) Parse(mod module.Version) {
 		Path:   path.Join(user, project),
 	}
 
+	m.Host = host
 	m.User = user
 	m.Project = project
 	m.URL = u.String()
@@ -52,34 +53,41 @@ type license struct {
 }
 
 // License will try to fetch a module's license from Github.
-// An empty license struct will be returned if the repository does not have a
-// license.
+// An empty license struct will be returned if a license does not exist
+// or cannot be fetched.
 func (m *detailMod) License(ctx context.Context, gh *github.Client) (*license, error) {
 	if m.User == "" || m.Project == "" {
-		return nil, fmt.Errorf("cannot fetch license for %s", m.Version.Path)
+		Log.Printf("cannot fetch license for %s", m.Version.Path)
+		return &license{}, nil
 	}
 
 	if l, ok := cacheGet(m.URL); ok {
 		return l, nil
 	}
 
-	resp, _, err := gh.Repositories.License(ctx, m.User, m.Project)
-	if err != nil && !strings.Contains(err.Error(), "404 Not Found") {
-		// Anything other than a 404
-		return nil, err
-	}
+	switch m.Host {
+	default:
+		Log.Printf("only supports github.com modules, skipping %s", m.Version.Path)
+		return &license{}, nil
+	case "github.com":
+		resp, _, err := gh.Repositories.License(ctx, m.User, m.Project)
+		if err != nil && !strings.Contains(err.Error(), "404 Not Found") {
+			// Anything other than a 404
+			return nil, err
+		}
 
-	var lic license
-	if resp != nil && resp.License != nil && resp.License.Name != nil {
-		lic.Name = *resp.License.Name
-	}
-	if resp != nil && resp.License != nil && resp.License.URL != nil {
-		lic.URL = *resp.License.URL
-	}
+		var lic license
+		if resp != nil && resp.License != nil && resp.License.Name != nil {
+			lic.Name = *resp.License.Name
+		}
+		if resp != nil && resp.License != nil && resp.License.URL != nil {
+			lic.URL = *resp.License.URL
+		}
 
-	if err := cacheSet(m.URL, &lic); err != nil {
-		Log.Printf("failed to cache %s: %w", m.URL, err)
-	}
+		if err := cacheSet(m.URL, &lic); err != nil {
+			Log.Printf("failed to cache %s: %w", m.URL, err)
+		}
 
-	return &lic, nil
+		return &lic, nil
+	}
 }
