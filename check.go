@@ -59,6 +59,10 @@ func (m *detailMod) License(ctx context.Context, gh *github.Client) (*license, e
 		return nil, fmt.Errorf("cannot fetch license for %s", m.Version.Path)
 	}
 
+	if l, ok := cacheGet(m.URL); ok {
+		return l, nil
+	}
+
 	resp, _, err := gh.Repositories.License(ctx, m.User, m.Project)
 	if err != nil && !strings.Contains(err.Error(), "404 Not Found") {
 		// Anything other than a 404
@@ -71,6 +75,10 @@ func (m *detailMod) License(ctx context.Context, gh *github.Client) (*license, e
 	}
 	if resp != nil && resp.License != nil && resp.License.URL != nil {
 		lic.URL = *resp.License.URL
+	}
+
+	if err := cacheSet(m.URL, &lic); err != nil {
+		Log.Printf("failed to cache %s: %w", m.URL, err)
 	}
 
 	return &lic, nil
